@@ -101,11 +101,10 @@ def clean_html( fragment ):
 # DATABASE
 
 class DB:
-
-	def connect(self, thread_index):
-		cherrypy.thread_data.db = sqlite3.connect('minitwit.sqlite')
-		self.conn = cherrypy.thread_data.db
-		self.c = self.conn.cursor()
+	
+	def __init__(self, conn = None):
+		self.conn = conn
+		self.c = conn.cursor()
 	
 	def fetchone(self, query, args=()):
 		self.c.execute(query, args)
@@ -119,8 +118,11 @@ class DB:
 		self.c.execute(query, args)
 		self.conn.commit()
 
-db = DB()
-cherrypy.engine.subscribe('start_thread', db.connect)
+def connect(self, thread_index):
+	cherrypy.thread_data.db = sqlite3.connect('minitwit.sqlite')
+	db = DB(cherrypy.thread_data.db)
+db = DB(cherrypy.thread_data.db)
+cherrypy.engine.subscribe('start_thread', connect)
 
 # CONTROLLERS
 
