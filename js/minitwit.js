@@ -47,6 +47,7 @@
 
 	// POLLING
 	
+	var lastUpdate = new Date().getTime()
 	if ($('#minitwits').size() > 0) {
 		var poll, pollT, pollI = 1000;
 		(poll = function(i) {
@@ -58,8 +59,12 @@
 				type: 'get', // RESTful!
 				url: '/post',
 				dataType: 'json',
+				data: {'last_update': lastUpdate},
 				success: function(data) {
-					updateMinitwits(data);
+					if (data.length > 0) {
+						updateMinitwits(data);
+						lastUpdate = new Date().getTime()
+					}
 					pollT = setTimeout(function() {poll(i*1.1)}, i); // Increments by 10%
 				}
 			});
