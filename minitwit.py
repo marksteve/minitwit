@@ -119,8 +119,7 @@ class DB:
 		self.c.execute(query, args)
 		self.conn.commit()
 
-db = DB()
-cherrypy.engine.subscribe('start_thread', db.connect)
+cherrypy.engine.subscribe('start_thread', DB().connect)
 
 # CONTROLLERS
 
@@ -129,11 +128,8 @@ class Session:
 	
 	def login(self, username='', password='', redirect='/'):
 		message = None
-		if len(username) > 0 and len(password) > 0:
-			conn = cherrypy.thread_data.db
-			c = conn.cursor()		
-			c.execute("select rowid from users where username = ? and password = ?", (username, md5sum(password)))
-			logged_in = c.fetchone()
+		if len(username) > 0 and len(password) > 0:	
+			logged_in = DB().fetchone("select rowid from users where username = ? and password = ?", (username, md5sum(password)))
 			if logged_in is not None:
 				cherrypy.session['logged_in'] = logged_in[0]
 				raise cherrypy.HTTPRedirect(redirect)
@@ -148,10 +144,7 @@ class Session:
 	def get_logged_in(self):
 		try:
 			rowid = cherrypy.session.get('logged_in')
-			conn = cherrypy.thread_data.db
-			c = conn.cursor()
-			c.execute('select rowid, username from users where rowid = ?', (rowid,))
-			r = c.fetchone()
+			r = DB().fetchone('select rowid, username from users where rowid = ?', (rowid,))
 			return {'id': r[0], 'username': r[1]}
 		except:
 			return None
@@ -163,8 +156,6 @@ class Post:
 	
 	def default(self, id=None, text=None):
 		logged_in = Session().get_logged_in()
-		conn = cherrypy.thread_data.db
-		c = conn.cursor()
 		m = cherrypy.request.method
 
 		cherrypy.response.headers['Content-Type'] = 'application/json'
@@ -179,8 +170,7 @@ class Post:
 				raise cherrypy.HTTPError(404)
 			if m == 'GET' and id > 0:
 				try:
-					c.execute('select rowid, text, date from posts where rowid = ?', (id,))
-					r = c.fetchone()
+					r = DB().fetchone('select rowid, text, date from posts where rowid = ?', (id,))
 					return json.dumps({'id': r[0], 'text': r[1], 'date': r[2]})
 				except:
 					raise cherrypy.HTTPError(404)
@@ -193,14 +183,12 @@ class Post:
 				if m == 'PUT':
 					text = clean_html(text)
 					if len(text) > 0 and len(text) <= 120:
-
-						c.execute('insert into posts values (?, ?, datetime("now"))', (logged_in['id'], text))
-						conn.commit()
+						DB().query('insert into posts values (?, ?, datetime("now"))', (logged_in['id'], text))
 					else:
 						raise cherrypy.HTTPError(400) # Bad request
 			try:
-				c.execute('select posts.rowid, text, date, username from posts join users on posts.user = users.rowid order by date desc limit 10')
-				return json.dumps([{'id': r[0], 'text': r[1], 'date': get_date(r[2]), 'username': r[3]} for r in c.fetchall()])
+				posts = DB().fetchall('select posts.rowid, text, date, username from posts join users on posts.user = users.rowid order by date desc limit 10')
+				return json.dumps([{'id': r[0], 'text': r[1], 'date': get_date(r[2]), 'username': r[3]} for r in posts])
 			except:
 				raise cherrypy.HTTPError(404)
 
@@ -215,34 +203,28 @@ class Minitwit:
 
 	def index(self):
 		logged_in = Session().get_logged_in()
-		conn = cherrypy.thread_data.db
-		c = conn.cursor()
-		c.execute('select posts.rowid, text, date, username from posts join users on posts.user = users.rowid order by date desc limit 10')
-		posts = [{'id': r[0], 'text': r[1], 'date': get_date(r[2]), 'username': r[3]} for r in c.fetchall()]
+		posts = DB().fetchall('select posts.rowid, text, date, username from posts join users on posts.user = users.rowid order by date desc limit 10')
+		posts = [{'id': r[0], 'text': r[1], 'date': get_date(r[2]), 'username': r[3]} for r in posts]
 		return templates.get_template('dashboard.html').render(logged_in=logged_in, posts=posts)
 
 	def register(self, username='', password='', conf_password=''):
 		message = None
 		if len(username) > 0 and len(password) > 0 and password == conf_password:
-			c.execute('insert into users values (?, ?)', username, md5sum(password))
-			conn.commit()
+			DB().query('insert into users values (?, ?)', username, md5sum(password))
 			raise cherrypy.HTTPRedirect('/session/login')
 		elif password != conf_password:
 			message = "Passwords don't match"
 		return templates.get_template('register.html').render(username=username, password=password, conf_password=conf_password, message=message)
 
 	def install(self):
-		conn = cherrypy.thread_data.db
-		c = conn.cursor()
-		c.execute("drop table if exists users")
-		c.execute("drop table if exists posts")
-		c.execute("create table users (username text, password text)")
-		c.execute("create unique index username on users (username)")
-		c.execute("create table posts (user int, text text, date text)")
-		c.execute("create index user on posts (user)")
-		c.execute("insert into users values (?, ?)",  ('demo', md5sum('demo')))
-		c.execute("insert into posts values (?, ?, datetime('now'))",  (1, 'Hello world'))
-		conn.commit()
+		DB().query("drop table if exists users")
+		DB().query("drop table if exists posts")
+		DB().query("create table users (username text, password text)")
+		DB().query("create unique index username on users (username)")
+		DB().query("create table posts (user int, text text, date text)")
+		DB().query("create index user on posts (user)")
+		DB().query("insert into users values (?, ?)",  ('demo', md5sum('demo')))
+		DB().query("insert into posts values (?, ?, datetime('now'))",  (1, 'Hello world'))
 		return "Tables created!"
 
 	index.exposed = True
