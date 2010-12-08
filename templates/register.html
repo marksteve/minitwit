@@ -1,0 +1,22 @@
+<%inherit file="layout.html"/>
+<h2>register</h2>
+% if message is not None:
+<p id="message">${message}</p>
+% endif
+<form action="/register" method="post">
+	<p>
+		<label for="username">username</label>
+		<input type="text" name="username" id="username" value="${username}" />
+	</p>
+	<p>
+		<label for="password">password</label>
+		<input type="password" name="password" id="password" value="${password}" />
+	</p>
+	<p>
+		<label for="conf_password">confirm</label>
+		<input type="password" name="conf_password" id="conf_password" value="${conf_password}" />
+	</p>
+	<p>
+		<input type="submit" value="register" />
+	</p>
+</form>

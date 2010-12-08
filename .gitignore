@@ -1,0 +1,8 @@
+*.py[co]
+*.sqlite
+.DS_STORE?
+
+BeautifulSoup.py
+cherrypy
+mako
+simplejson

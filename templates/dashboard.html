@@ -1,0 +1,16 @@
+<%inherit file="layout.html"/>
+% if logged_in is not None:
+<h2>welcome back, ${logged_in['username']}!</h2>
+<form action="/post" method="put" id="postbox_form">
+<textarea name="text" id="postbox"></textarea>
+<p><input type="submit" value="submit"></p>
+</form>
+% else:
+<p>Not logged in? <a href="/register">Register</a> or <a href="/session/login">login</a>!</p>
+% endif
+
+<ul id="minitwits">
+% for p in posts:
+	<li id="post_${p['id']}"><h3>${p['username']}</h3> <p>${p['text']} <span class="date">${p['date']}</span></p></li>
+% endfor
+</ul>

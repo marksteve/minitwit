@@ -1,0 +1,18 @@
+<%inherit file="layout.html"/>
+<h2>login</h2>
+% if message is not None:
+<p id="message">${message}</p>
+% endif
+<form action="/session/login" method="post">
+	<p>
+		<label for="username">username</label>
+		<input type="text" name="username" id="username" value="${username}" />
+	</p>
+	<p>
+		<label for="password">password</label>
+		<input type="password" name="password" id="password" value="${password}" />
+	</p>
+	<p>
+		<input type="submit" value="login" />
+	</p>
+</form>
