@@ -1,0 +1,5 @@
+wsgiserver2
+BeautifulSoup
+cherrypy<3.3
+mako==0.3.6
+simplejson==2.1.2
